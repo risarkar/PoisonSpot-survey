@@ -11,15 +11,16 @@ This repository contains the implementation of PoisonSpot: Precise Spotting of C
    ```bash
    git clone https://github.com/ccs-anonymous/PoisonSpot.git
    ```
-2. **Install the required packages:**
+
+2. **Move to the PoisonSpot directory:**
+   ```bash
+   cd PoisonSpot
+   ```
+3. **Install the required packages:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Move to the PoisonSpot directory:**
-   ```bash
-   cd PoisonSpot
-   ```
 
 ## Usage Examples
 
