@@ -40,6 +40,14 @@ Replace pr_tgt and pr_sus with the desired values. For the weaker attack analysi
 
 ---
 
+
+### **Results (Applies to All Experiments)**
+
+- The provenance data collected during training is saved in the `Training_Prov_Data` folder (You need to create folder under ./PoinsonSpot).
+- Visualizations of the poison score distribution from the experiments are saved in the `results` folder as images.
+- The True Positive Rate (TPR) and False Positive Rate (FPR) values are calculated and printed for both thresholds (Kmeans and Gaussian) specified using the `score_samples` argument.
+- The downstream evaluation results are printed after retraining the model using the `retrain` argument.
+
 ### Label Consistent Attack
 Replace pr_tgt and pr_sus with the desired values. For the weaker attack analysis use --eps 2, and --eps 4 with --vis 32  
 
@@ -154,16 +162,6 @@ Replace pr_tgt and pr_sus with the desired values.
       
    python3 capture_prov.py --attack ht --clean_model_path saved_models/custom_resnet18_tinyimagenet_100_4.pth --target_class 40 --source_class 30 --pr_tgt 0.5 --scenario fine_tuning --model CustomResNet18 --dataset imagenet --pr_sus 50  --sample_from_test --training_mode  --epochs 10   --lr 0.001 --opt adam --bs 64 --ep_bl 5 --ep_bl_base 1 --ep_sl_base 1 --bs 64 --bs_bl 64 --bs_sl 64 --batch_level --sample_level --score_samples --retrain
    ```
-
-
-
-### **Results**
-
-- The provenance data collected during training is saved in the `Training_Prov_Data` folder.
-- Visualizations of the poison score distribution from the experiments are saved in the `results` folder as images.
-- The True Positive Rate (TPR) and False Positive Rate (FPR) values are calculated and printed for both thresholds (Kmeans and Gaussian) specified using the `score_samples` argument.
-- The downstream evaluation results are printed after retraining the model using the `retrain` argument.
-
 ---
 ## PoisonSpot Arguments
 Below is a list of names, descriptions, and and default values (if any) of PoisonSpot arguments:
