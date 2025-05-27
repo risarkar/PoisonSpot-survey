@@ -1,238 +1,166 @@
 # **PoisonSpot: Precise Spotting of Clean-Label Backdoors via Fine-Grained Training Provenance Tracking**
 
 
-This repository contains the implementation of PoisonSpot: Precise Spotting of Clean-Label Backdoors via Fine-Grained Training Provenance Tracking.
+This repository contains the implementation of PoisonSpot: Precise Spotting of Clean-Label Backdoors via Fine-Grained Training Provenance Tracking. PoisonSpot is a novel system that precisely detects clean-label backdoor attacks by using fine-grained training provenance tracking, inspired by dynamic taint tracking. PoisonSpot captures and analyzes the impact of individual training samples on model parameter updates throughout the training process. By attributing poisoning scores to suspect samples based on their impact lineage, PoisonSpot allows for accurate identification and rejection of samples carrying backdoor triggers.
 
 
 ---
+
+
+## Steps of PoisonSpot
+1. **Poisoned Model Training (`poisoned_training`)**
+   - Train a model on a dataset with a specified percentage of poisoned samples. 
+2. **Batch Level Provenance Capture (`batch_level`)**
+   - Capture the batch-level provenance data using the trained model to get important features.
+3. **Sample Level Provenance Capture (`sample_level`)**
+   - Capture the sample-level provenance data using the trained model and the important features. 
+4. **Poisoning Score Attribution (`score_samples`)**
+   - Score the suspected samples using the captured sample-level provenance data.
+5. **Retraining (`retrain`)**
+   - Retrain and evaluate the model by removing the predicted poisoned samples from the training set.
+
+
+## Arguments
+Below is a list of arguments you can use with PoisonSpot and their functions:
+
+| Argument               | Description                                                    | Default Value                      |
+|------------------------|---------------------------------------------------------------|------------------------------------|
+| `batch_level`        | Capture batch-level provenance data                                | `True`                                   |
+| `clean_training`     | Perform clean training by removing the suspected samples      | `False`                                   |
+| `poisoned_training`  | Perform training using the suspected samples                  | `True`                                   |
+| `sample_level`       | Capture sample-level provenance data                              | `True`                                   |
+| `score_samples`      | Score suspected samples based on the sample-level provenance data                                       | `True`                                   |
+| `retrain`            | Retrain the model by excluding predicted poisoned samples              | `True`                                   |
+| `pr_sus`             | Percentage of poisoned data in the suspected set (%)          | `100`                              |
+| `ep_bl`              | Training epochs for batch-level provenance capture               | `10`                               |
+| `ep_bl_base`         | Epoch number to start batch-level provenance capture             | `200`                              |
+| `ep_sl`              | Training epochs for sample-level provenance capture                     | `10`                               |
+| `ep_sl_base`         | Epoch number to start sample-level provenance capture                   | `200`                              |
+| `pr_tgt`             | Percentage of poisoned data in the target set (%)                 | `10`                              |
+| `bs_sl`              | Batch size for sample-level provenance capture                         | `128`                              |
+| `bs_bl`              | Batch size for batch-level provenance capture                          | `128`                              |
+| `bs`                 | Batch size for clean training, poisoned training, and retraining | `128`                              |
+| `eps`                | perturbation budget (`eps/255`)                              | `16`                                |
+| `vis`                | pixel value for label-consistent attack (0-255)              | `255`                                 |
+| `target_class`       | Target class for the attack                                  | `2`                                |
+| `source_class`       | Source class for the attack                                  | `0`                                |
+| `dataset`            | Dataset to use for the experiment                            | `"CIFAR10"`                       |
+| `attack`             | Attack to use for the experiment                             | `"lc"`                             |
+| `model`              | Model to use for the experiment                              | `"ResNet18"`                      |
+| `dataset_dir`        | Root directory for the datasets                              | `"./data/"`                    |
+| `clean_model_path`   | Path to the trained clean model using for fine-tuning         | `'./saved_models/resnet18_200_clean.pth'` |
+| `saved_models_path`  | Path to save the trained models                                      | `'./saved_models/'`                |
+| `global_seed`        | Global seed for the experiment                               | `545`                              |
+| `gpu_id`             | GPU device ID to use for the experiment                      | `0`                                |
+| `lr`                 | Learning rate for the experiment                             | `0.1`                              |
+| `results_path`       | Path to save the figures                                     | `"./results/"`                     |
+| `prov_path`          | Path to save the provenance data                             | `"./Training_Prov_Data/"`          |
+| `epochs`             | Number of epochs for clean training, poisoned training, and retraining       | `200`                              |
+| `scenario`           | Scenario to use for the experiment (`fine_tune` or `from_scratch`) | `"from_scratch"`                   |
+| `get_result`         | Get results from previous runs                               | `False`                                   |
+| `force`              | Force the run overwriting previous results                   | `False`                                   |
+| `threshold`          | Custom threshold for scoring suspected samples                      | `0.5`                              |
+| `sample_from_test`   | Sample from the test set                                     | `False`                                   |
+| `cv_model`           | Model to use for cross-validation                            | `"RandomForest"`                   |
+| `groups`             | Number of groups to use for cross-validation                 | `5`                                |
+| `opt`                | Optimizer to use for the experiment                          | `"sgd"`                            |
+| `random`             | Random trigger for Sleeper-Agent attack (`True` or `False`) | `False`                                   |
+| `training_mode`      | Training mode for the experiment (`true` or `false`)            | `true`                                   |
+
+---
+
+
+
 ## Installation
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/um-dsp/PoisonSpot/PoisonSpot.git
+   git clone https://github.com/ccs-anonymous/PoisonSpot.git
    ```
-
-2. **Switch to PoisonSpot directory:**
-   ```bash
-   cd PoisonSpot
-   ```
-3. **Install dependencies:**
+2. **Install the required packages:**
    ```bash
    pip install -r requirements.txt
    ```
 
-
-## Usage Examples
-
-### Narcissus Attack
-#### Poison Ratio: 1% Training Set (`pr_tgt 0.1`), 50% Suspected Set (`pr_sus 50`)
-Replace pr_tgt and pr_sus with the desired values. For the weaker attack analysis add --eps 6 and --eps 8 
-
-1. **Train the poisoned model:**
+3. **Move to the PoisonSpot directory:**
    ```bash
-   python3 capture_prov.py --attack narcissus --target_class 2 --pr_tgt 0.1 --pr_sus 50 --poisoned_training --epochs 200
+   cd PoisonSpot
    ```
 
-2. **Capture provenance data and retrain the model:**
+
+
+
+
+
+# Usage Instructions
+
+1. **Prepare your config file**  
+   Pick an example configuration file (YAML) from `configs/`, then edit the arguments such as`pr_tgt` and `pr_sus` to suit your experiment:
+   For example, to run a full pipeline Label-Consistent attack on CIFAR-10 from scratch, you can use the following configuration file:
+
    ```bash
-   python3 capture_prov.py --attack narcissus --target_class 2 --pr_tgt 0.1 --pr_sus 50 --batch_level --sample_level --score_samples --retrain
+   configs/config_lc_cifar_10.yaml
    ```
 
----
+2. **Run the full pipeline**
+   You can run the full pipeline using the `main.py` script. The script will execute all steps of PoisonSpot based on the provided configuration file.
 
-
-### **Results (Applies to All Experiments)**
-
-- The provenance data collected during training is saved in the `Training_Prov_Data` folder (You need to create folder under ./PoinsonSpot).
-- Visualizations of the poison score distribution from the experiments are saved in the `results` folder as images.
-- The True Positive Rate (TPR) and False Positive Rate (FPR) values are calculated and printed for both thresholds (Kmeans and Gaussian) specified using the `score_samples` argument.
-- The downstream evaluation results are printed after retraining the model using the `retrain` argument.
-
-### Label Consistent Attack
-Replace pr_tgt and pr_sus with the desired values. For the weaker attack analysis use --eps 2, and --eps 4 with --vis 32  
-
-1. **Train the poisoned model:**
    ```bash
-   python3 capture_prov.py --attack lc --eps 8 --target_class 2 --pr_tgt 0.1 --pr_sus 50 --poisoned_training --epochs 200
-   ```
-
-2. **Capture provenance data and retrain the model:**
-   ```bash
-   python3 capture_prov.py --attack lc --eps 8 --target_class 2 --pr_tgt 0.1 --pr_sus 50 --batch_level --sample_level --score_samples --retrain
+   python3 main.py -c configs/config_lc_cifar_10.yaml
    ```
 
 ---
 
-### Sample-Level Training
-#### Sleeper Agent Attack
-Replace pr_tgt and pr_sus with the desired values.
-1. **Train the poisoned model:**
-   ```bash
-   python3 capture_prov.py --attack sa --target_class 1 --source_class 0 --pr_tgt 0.1 --pr_sus 50 --poisoned_training --epochs 200
-   ```
+## Configuration Files
+This repository includes several custom configuration files for different attacks and datasets. Each configuration file is designed to run a specific attack on a dataset with predefined parameters. These configuration files are located in the `configs/` directory. You can modify these files to adjust parameters such as the percentage of poisoned samples, batch size, learning rate, and more. The configuration files are written in YAML format. You can easily edit them to customize your experiments. 
 
-2. **Capture provenance data and retrain the model:**
-   ```bash
-   python3 capture_prov.py --attack sa --target_class 1 --source_class 0 --pr_tgt 0.1 --pr_sus 50 --batch_level --sample_level --score_samples --retrain
+Below are the custom configuration files included in this repository, with a brief description of each:
+
+| Filename                                          | Description                                                                                  |
+|---------------------------------------------------|----------------------------------------------------------------------------------------------|
+| `configs/config_lc_cifar_10.yaml`                 | Label-Consistent attack on CIFAR-10 from scratch (default: `pr_tgt=10%`, `pr_sus=50%`)       |
+| `configs/config_sa_cifar_10.yaml`                 | Sleeper-Agent attack on CIFAR-10 from scratch (default: `pr_tgt=10%` `pr_sus=50%`)           |
+| `configs/config_narcissus_cifar_10.yaml`          | Narcissus attack on CIFAR-10 from scratch                                                    |
+| `configs/config_mixed_lc_narcissus_cifar_10.yaml` | Mixed Label-Consistent + Narcissus on CIFAR-10                                               |
+| `configs/config_mixed_lc_sa_narcissus_cifar_10.yaml` | Mixed Label-Consistent + Sleeper-Agent + Narcissus on CIFAR-10                            |
+| `configs/config_ht_cifar_10.yaml`                 | Hidden-Trigger attack on CIFAR-10                                                            |
+| `configs/config_ht_slt_10.yaml`                   | Hidden-Trigger attack on STL-10                                                              |
+| `configs/config_sa_cifar_10_fine_tune.yaml`       | Sleeper-Agent on CIFAR-10 (Fine tuning)                                                  |
+| `configs/config_ht_imagenet_fine_tune.yaml`       | Hidden-Trigger attack on ImageNet                                                            |
+
+
+## Note
+- The pr_tgt argument specifies the percentage of poisoned samples in the target set. So, to be consistent with our paper, in which we use the percentage of poisoned samples in the whole dataset, you can divide pr_tgt by the number of classes (10). For example, if you set pr_tgt=10, it means you are running an experiment with a 1% poisoned sample rate in the training set.
+
+
+### **Results**
+- The output results are saved in `results` folder 
    ```
+   src/results/experiment_<attack>_<dataset>_<pr_tgt>_<pr_sus>/results.csv
+   ```
+You can also specify a custom experiment name via the `exp` field in your config.
+
+The CSV contains the following columns:
+
+| Column                      | Description                                                      |
+|-----------------------------|------------------------------------------------------------------|
+| `epochs`                    | Number of epochs run                                             |
+| `Clean training ACC`        | Accuracy on clean test set after clean training                  |
+| `Poisoned training ACC`     | Accuracy on poisoned test set after poisoned training            |
+| `Poisoned training ASR`     | Attack success rate on poisoned test set                         |
+| `Batch-level \|features\|`  | Number of important features from batch level provenance capture |
+| `TPR KMeans`                | True positive rate using K-means threshold                       |
+| `FPR KMeans`                | False positive rate using K-means threshold                      |
+| `TPR Gaussian`              | True positive rate using Gaussian threshold              |
+| `FPR Gaussian`              | False positive rate using Gaussian hreshold             |
+| `Retrain ACC`               | Accuracy on clean test set after retraining    |
+| `Retrain ASR`               | Attack success rate after retraining           |
+
+- The results in the paper are mostly based on the `KMeans` threshold, but you can also use the `Gaussian` threshold for comparison.
+- The provenance data collected during training is saved in the `Training_Prov_Data` folder.
+- Visualizations of the poison score distribution from the experiments are saved in the experiment folder under `results/experiment_<attack>_<dataset>_<pr_tgt>_<pr_sus>/` as images.
+
+
 
 ---
 
-### Fine-Tuning: Sleeper Agent
-Replace pr_tgt and pr_sus with the desired values.
-1. **Fine-tune the model:**
-   ```bash
-   python3 capture_prov.py --attack sa --target_class 1 --source_class 0 --pr_sus 50 --pr_tgt 0.5 --scenario fine_tuning --clean_model_path ./saved_models/model_sa_resnet_200_128.pth --ep_bl_base 0 --sample_from_test --poisoned_training --epochs 10 --lr 0.01
-   ```
-
-2. **Capture provenance and retrain:**
-   ```bash
-   python3 capture_prov.py --attack sa --target_class 1 --source_class 0 --pr_sus 50 --pr_tgt 0.5 --scenario fine_tuning --clean_model_path ./saved_models/model_sa_resnet_200_128.pth --ep_bl_base 0 --sample_from_test --batch_level --ep_sl_base 0 --sample_level --score_samples --retrain --lr 0.01 --epochs 10
-   ```
-
----
-
-### Fine-Tuning: Hidden Trigger
-1. **Fine-tune the model:**
-   ```bash
-   python3 capture_prov.py --attack ht --clean_model_path ./saved_models/htbd_art_model_200.pth --target_class 4 --source_class 3 --pr_tgt 0.5 --scenario fine_tuning --model CustomCNN --pr_sus 50 --sample_from_test --poisoned_training --ep_bl_base 0 --epochs 10 --lr 0.01
-   ```
-
-2. **Capture provenance and retrain:**
-   ```bash
-   python3 capture_prov.py --attack ht --clean_model_path ./saved_models/htbd_art_model_200.pth --target_class 4 --source_class 3 --pr_tgt 0.5 --scenario fine_tuning --model CustomCNN --pr_sus 50 --sample_from_test --ep_bl_base 0 --epochs 10 --batch_level --ep_sl_base 0 --sample_level --score_samples --retrain --lr 0.01
-   ```
----
-
-
-
-### Mixed Training
-#### Narcissus poison ratio (training set 0.05%), label consistent poison ratio (training set 1%)
-Replace pr_tgt and pr_sus with the desired values.
-1. **Train the poisoned model:**
-   ```bash
-   python3 capture_prov.py --attack narcissus_lc --poisoned_training
-   ```
-
-2. **Capture provenance data and retrain the model:**
-   ```bash
-    python3 capture_prov.py --attack narcissus_lc --poisoned_training --batch_level --sample_level --score_samples --retrain
-   ```
----
-#### Narcissus poison ratio (training set 0.05%), label consistent poison ratio (training set 1%), Sleeper Agent (training set 1%) 
-Replace pr_tgt and pr_sus with the desired values.
-1. **Train the poisoned model:**
-   ```bash
-   python3 capture_prov.py --attack narcissus_lc_sa --poisoned_training
-   ```
-
-2. **Capture provenance data and retrain the model:**
-   ```bash
-    python3 capture_prov.py --attack narcissus_lc_sa --poisoned_training --batch_level --sample_level --score_samples --retrain
-   ```
-
----
-
-### Fine-Tuning: Hidden Trigger  SLT-10
-1. **Fine-tune the model:**
-   ```bash
-
-   python3 capture_prov.py --attack ht --clean_model_path saved_models/model_sa_vit_10_64.pth --target_class 4 --source_class 3 --pr_tgt 0.5 --scenario fine_tuning --model ViT --dataset slt10 --pr_sus 50  --sample_from_test --training_mode  --epochs 10   --lr 0.001 --opt adam --poisoned_training --bs 64
-
-   ```
-
-2. **Capture provenance and retrain:**
-   ```bash
-   python3 capture_prov.py --attack ht --clean_model_path saved_models/model_sa_vit_10_64.pth --target_class 4 --source_class 3 --pr_tgt 0.5 --scenario fine_tuning --model ViT --dataset slt10 --pr_sus 50  --sample_from_test --training_mode  --epochs 10   --lr 0.001 --opt adam --ep_bl 5 --ep_bl_base 1 --ep_sl_base 1 --bs 64 --bs_bl 64 --bs_sl 64 --batch_level --sample_level --score_samples --retrain
-   ```
----
-
-### Fine-Tuning: Hidden Trigger  ImageNet
-1. **Fine-tune the model:**
-   ```bash
-
-   python3 capture_prov.py --attack ht --clean_model_path saved_models/custom_resnet18_tinyimagenet_100_4.pth --target_class 40 --source_class 30 --pr_tgt 0.5 --scenario fine_tuning --model CustomResNet18 --dataset imagenet --pr_sus 50  --sample_from_test --training_mode  --epochs 10   --lr 0.001 --opt adam --poisoned_training --bs 64
-
-    ```
-
----
-
-2. **Capture provenance and retrain:**
-   ```bash
-      
-   python3 capture_prov.py --attack ht --clean_model_path saved_models/custom_resnet18_tinyimagenet_100_4.pth --target_class 40 --source_class 30 --pr_tgt 0.5 --scenario fine_tuning --model CustomResNet18 --dataset imagenet --pr_sus 50  --sample_from_test --training_mode  --epochs 10   --lr 0.001 --opt adam --bs 64 --ep_bl 5 --ep_bl_base 1 --ep_sl_base 1 --bs 64 --bs_bl 64 --bs_sl 64 --batch_level --sample_level --score_samples --retrain
-   ```
----
-## PoisonSpot Arguments
-Below is a list of names, descriptions, and and default values (if any) of PoisonSpot arguments:
-
-| Argument               | Description                                                    | Default Value                      |
-|------------------------|----------------------------------------------------------------|------------------------------------|
-| `--batch_level`        | Enable batch-level weight updates                             |                                    |
-| `--clean_training`     | Perform clean training                                        |                                    |
-| `--poisoned_training`  | Perform poisoned training                                     |                                    |
-| `--sample_level`       | Enable sample-level weight updates                            |                                    |
-| `--score_samples`      | Score suspected samples                                       |                                    |
-| `--retrain`            | Retrain the model                                             |                                    |
-| `--pr_sus`             | Percentage of poisoned data in the suspected set             | `100`                              |
-| `--ep_bl`              | Training epochs for batch-level weight capture               | `10`                               |
-| `--ep_bl_base`         | Training epochs before batch-level capture                   | `200`                              |
-| `--ep_sl`              | Training epochs for sample-level training                    | `10`                               |
-| `--ep_sl_base`         | Training epochs before sample-level capture                  | `200`                              |
-| `--pr_tgt`             | Ratio of poisoned data in the target set                     | `0.1`                              |
-| `--bs_sl`              | Batch size for sample-level training                         | `128`                              |
-| `--bs_bl`              | Batch size for batch-level training                          | `128`                              |
-| `--bs`                 | Batch size for training                                      | `128`                              |
-| `--eps`                | Epsilon for the attack                                       | `16`                               |
-| `--vis`                | Visibility for label consistent attack                       | `255`                              |
-| `--target_class`       | Target class for the attack                                  | `2`                                |
-| `--source_class`       | Source class for the attack                                  | `0`                                |
-| `--dataset`            | Dataset to use for the experiment                            | `"CIFAR10"`                       |
-| `--attack`             | Attack to use for the experiment                             | `"lc"`                             |
-| `--model`              | Model to use for the experiment                              | `"ResNet18"`                      |
-| `--dataset_dir`        | Root directory for the datasets                              | `"./datasets/"`                    |
-| `--clean_model_path`   | Path to the clean model                                      | `'./saved_models/resnet18_200_clean.pth'` |
-| `--saved_models_path`  | Path to save the models                                      | `'./saved_models/'`                |
-| `--global_seed`        | Global seed for the experiment                               | `545`                              |
-| `--gpu_id`             | GPU ID to use for the experiment                             | `0`                                |
-| `--lr`                 | Learning rate for the experiment                             | `0.1`                              |
-| `--figure_path`        | Path to save the figures                                     | `"./results/"`                     |
-| `--prov_path`          | Path to save the provenance data                             | `"./Training_Prov_Data/"`          |
-| `--epochs`             | Number of epochs for either clean or poisoned training       | `200`                              |
-| `--scenario`           | Scenario to use for the experiment                           | `"from_scratch"`                   |
-| `--get_result`         | Get results from previous runs                               |                                    |
-| `--force`              | Force the run                                                |                                    |
-| `--threshold`          | Threshold for scoring suspected samples                     | `0.5`                              |
-| `--sample_from_test`   | Sample from the test set                                     |                                    |
-| `--cv_model`           | Model to use for cross-validation                            | `"RandomForest"`                   |
-| `--groups`             | Number of groups to use for cross-validation                 | `5`                                |
-| `--opt`                | Optimizer to use for the experiment                          | `"sgd"`                            |
-
----
-
-
-### Configure the poison ratio for the training set ($D_{cln}$) using the following values:
-
-
-| Percentage (%)  | Parameter (`pr_tgt`) |
-|------------------|-----------------------|
-| 1%              | `0.1`                |
-| 2%              | `0.2`                |
-| 3%              | `0.3`                |
-| 4%              | `0.4`                |
-| 5%              | `0.5`                |
-| 7.5%            | `0.75`               |
-| 10%             | `1.0`                |
-
-### Configure the poison ratio for the unknown set ($D_{unk}$) using the following values:
-
-| Percentage (%)  | Parameter (`pr_sus`) |
-|------------------|-----------------------|
-| 10%             | `10`                 |
-| 25%             | `25`                 |
-| 50%             | `50`                 |
-| 75%             | `75`                 |
-| 100%            | `100`                |
-
-
----
