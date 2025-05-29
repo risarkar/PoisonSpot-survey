@@ -65,7 +65,7 @@ Below is a list of arguments you can use with PoisonSpot and their functions:
 | `groups`             | Number of groups to use for cross-validation                 | `5`                                |
 | `opt`                | Optimizer to use for the experiment  (`sgd`, `adam`)              | `"sgd"`                            |
 | `random`             | Random trigger for Sleeper-Agent attack (`True` or `False`) | `False`                                   |
-| `training_mode`      | Training mode for the experiment (`true` or `false`)            | `true`                                   |
+| `training_mode`      | Training mode for the experiment (`true` or `false`)          |  `true`                                   |
 
 ---
 
