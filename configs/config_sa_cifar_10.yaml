@@ -16,7 +16,7 @@ exp:
 
 # training schedule
 epochs: 200
-ep_bl: 10
+ep_bl: 1
 ep_bl_base: 200
 ep_sl: 10
 ep_sl_base: 200
@@ -38,7 +38,7 @@ vis: 255
 # which phases to run
 batch_level: true
 clean_training: false
-poisoned_training: true
+poisoned_training: false
 sample_level: true
 score_samples: true
 retrain: true

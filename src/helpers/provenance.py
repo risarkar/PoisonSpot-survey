@@ -64,8 +64,6 @@ def capture_first_level_multi_epoch_batch_sample_weight_updates(
         training_mode (bool, optional): If True, run in training mode. Defaults to True.
         k (int, optional): Number of top features or samples to track. Defaults to 1.
 
-    Returns:
-        None: Saves weight update visualizations and logs to figure_path.
     """
     
     torch.manual_seed(seed)

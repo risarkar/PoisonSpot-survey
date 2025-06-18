@@ -17,10 +17,10 @@ prov_path: ./src/Training_Prov_Data/
 exp: 
 
 # training schedule
-epochs: 1
-ep_bl: 1
+epochs: 10
+ep_bl: 10
 ep_bl_base: 0
-ep_sl: 1
+ep_sl: 10
 ep_sl_base: 0
 
 # batch sizes
@@ -47,7 +47,7 @@ get_result: false
 force: false
 
 # misc
-gpu_id: 0
+gpu_id: 1
 global_seed: 545
 lr: 0.01
 opt: sgd

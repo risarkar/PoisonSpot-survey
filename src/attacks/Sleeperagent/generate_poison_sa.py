@@ -22,7 +22,7 @@ from pytorch_pretrained_vit import ViT
 
 deterministic = True
 
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 def get_sa_cifar10_poisoned_data(
@@ -154,7 +154,7 @@ def get_sa_cifar10_poisoned_data(
     
     index_source_test = np.where(y_test.argmax(axis=1)==source_class)[0]
     x_test_trigger = x_test[index_source_test]
-    if not random:
+    if not random_sa:
         x_test_trigger = add_trigger_patch(x_test_trigger,"fixed")
     else:
         x_test_trigger = add_trigger_patch(x_test_trigger,"random")
@@ -191,18 +191,12 @@ def get_sa_cifar10_poisoned_data(
                     image = self.transform(image)
                 return image, label, index
     
-    
-    if not random:
-        transform_train = Compose([
-            ToTensor(),
-            Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            RandomHorizontalFlip(),
-        ])
-    else:
-        transform_train = Compose([
-            ToTensor(),
-            Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ])
+
+    transform_train = Compose([
+        ToTensor(),
+        Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        RandomHorizontalFlip(),
+    ])
     
     transform_test = Compose([
         ToTensor(),
