@@ -1,0 +1,5 @@
+epochs,Batch-level |features|,TPR KMeans,FPR KMeans,TPR Gaussian,FPR Gaussian
+1,4452,,,,
+10,,95.12,0.1,99.32,2.83
+1,4456,,,,
+10,,95.51,0.1,99.32,2.83

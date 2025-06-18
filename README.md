@@ -59,7 +59,10 @@ Below is a list of arguments you can use with PoisonSpot and their functions:
 | `scenario`           | Scenario to use for the experiment (`fine_tune` or `from_scratch`) | `"from_scratch"`                   |
 | `get_result`         | Get results from previous runs                               | `False`                                   |
 | `force`              | Force the run overwriting previous results                   | `False`                                   |
-| `threshold`          | Custom threshold for scoring suspected samples                      | `0.5`                              |
+| `custom_threshold`   | Custom threshold for scoring suspected samples               | `0.5`                              |
+| `Threshold_type`     | Kmeans, Gaussian, or custom threshold choice                | `Kmeans`                            |
+| `k_1`                | First phase threshold                                        | `1`                             | 
+| `k_2`                | Second phase threshold                                        | `0.0001`                             | 
 | `sample_from_test`   | Sample from the test set                                     | `False`                                   |
 | `cv_model`           | Model to use for cross-validation                            | `"RandomForest"`                   |
 | `groups`             | Number of groups to use for cross-validation                 | `5`                                |
@@ -108,6 +111,17 @@ Below is a list of arguments you can use with PoisonSpot and their functions:
    ```bash
    python3 main.py -c configs/config_lc_cifar_10.yaml
    ```
+
+# Alternative method 
+To run several configuration files in one go, use the shell script in the scripts/ directory. List the configs you want inside the script, make it executable, and then run it:
+
+```bash
+chmod +x scripts/run.sh
+```
+```
+bash 
+./scripts/run.sh
+```
 
 ---
 

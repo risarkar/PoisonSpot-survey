@@ -25,7 +25,9 @@ import torchvision
 from src import *
 import csv
 import json
+import shutil
 warnings.filterwarnings("ignore")
+
 import tensorflow as tf                                        
 tf.compat.v1.disable_eager_execution()
 tf.get_logger().setLevel("ERROR")
@@ -57,10 +59,9 @@ def load_cfg(path: str) -> SimpleNamespace:
 
 
 def main() -> None:
-    """Entry-point: glue everything together."""
+    print(torch.cuda.device_count(), "GPUs available")
     args = parse_args()
     cfg = load_cfg(args.config)         
-    # os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.gpu_id)
 
     if cfg.exp is None:
         cfg.exp  = f"{cfg.attack}_{cfg.dataset}_{cfg.eps}_{cfg.pr_tgt}_{cfg.pr_sus}"
@@ -121,7 +122,11 @@ def main() -> None:
     elif cfg.scenario != "from_scratch":
         raise ValueError("Unsupported scenario")
 
-
+    if cfg.random:
+        cfg.exp += "_random"
+        cfg.saved_models_path += "random/"
+        if not os.path.exists(cfg.saved_models_path):
+            os.makedirs(cfg.saved_models_path)
 
         
     if cfg.pr_sus == int(cfg.pr_sus):
@@ -269,9 +274,8 @@ def main() -> None:
 
 
         cfg_path = os.path.join(folder, "config.json")
-        if not os.path.exists(cfg_path):
-            with open(cfg_path, "w") as j:
-                json.dump(vars(cfg), j, indent=4)
+        with open(cfg_path, "w") as j:
+            json.dump(vars(cfg), j, indent=4)
 
         header = [
             "epochs",
@@ -302,19 +306,38 @@ def main() -> None:
     def update_results(csv_path, **metrics):
         """
         Append a row with the supplied metrics.
-        Unreported columns are left blank.
         """
-
-        if os.path.getsize(csv_path) == 0:
+        if not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0:
+            header = list(metrics.keys())
             with open(csv_path, "w", newline="") as f:
-                csv.writer(f).writerow(RESULTS_HEADER)
+                writer = csv.DictWriter(f, fieldnames=header)
+                writer.writeheader()
+                writer.writerow(metrics)
+            return
 
+        # Read existing CSV
         with open(csv_path, newline="") as f:
-            header = next(csv.reader(f))
-        row = {h: "" for h in header}
-        row.update(metrics)            # keep only the keys we know about
-        with open(csv_path, "a", newline="") as f:
-            csv.DictWriter(f, fieldnames=header).writerow(row)
+            reader = list(csv.DictReader(f))
+            old_fieldnames = reader[0].keys() if reader else []
+            rows = [dict(r) for r in reader]
+
+        # Determine new header
+        new_keys = [k for k in metrics.keys() if k not in old_fieldnames]
+        fieldnames = list(old_fieldnames) + new_keys
+
+        # Rewrite CSV with updated header
+        tmp_path = csv_path + ".tmp"
+        with open(tmp_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            # write old rows 
+            for r in rows:
+                writer.writerow(r)
+            # write the new row
+            writer.writerow({**{k: "" for k in fieldnames}, **metrics})
+
+        # Replace original file
+        shutil.move(tmp_path, csv_path)
 
     if cfg.clean_training:
         train_loader, test_loader, poisoned_test_loader, _ = get_loaders_from_dataset(
@@ -353,7 +376,16 @@ def main() -> None:
                 f"clean_model_{cfg.attack}_{cfg.dataset}_{cfg.eps}_{cfg.pr_tgt}_{cfg.epochs}.pkl"
             )
             model.load_state_dict(torch.load(ckpt))
-            evaluate_model(model, test_loader, poisoned_test_loader, criterion, device)
+            test_ACC = evaluate_model(model, test_loader, poisoned_test_loader, criterion, device)
+            
+            csv_file = init_experiment_folder(cfg)   
+            update_results(
+                csv_file,
+                epochs=cfg.epochs,
+                **{
+                    "Clean training ACC": test_ACC,
+                }
+            )
         else:
             # train & save
             model, optimizer, scheduler, test_ASR, test_ACC = train(
@@ -424,7 +456,42 @@ def main() -> None:
         if cfg.get_result:
             # Load and evaluate
             model.load_state_dict(torch.load(ckpt))
-            evaluate_model(model, test_loader, poisoned_test_loader, criterion, device)
+            test_ASR, test_ACC = evaluate_model(model, test_loader, poisoned_test_loader, criterion, device)
+            
+            if cfg.attack in {"narcissus_lc"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Poisoned training ASR Narcissus": test_ASR[-1],
+                        "Poisoned training ASR Label Consistent": test_ASR[-2],
+                        "Poisoned training ACC": test_ACC[-1],
+                    }
+                )
+            elif cfg.attack in {"narcissus_lc_sa"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Poisoned training ASR Narcissus": test_ASR[-1],
+                        "Poisoned training ASR Label Consistent": test_ASR[-2],
+                        "Poisoned training ASR Sleeper Agent": test_ASR[-3],
+                        "Poisoned training ACC": test_ACC[-1],
+                    }
+                )
+            else:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Poisoned training ACC": test_ACC,
+                        "Poisoned training ASR": test_ASR[-1],
+                    }
+                )
+            
         else:
             # Train and save
             model, optimizer, scheduler, test_ASR, test_ACC= train(
@@ -453,15 +520,39 @@ def main() -> None:
                 f"scheduler_{cfg.attack}_{cfg.dataset}_{cfg.eps}_{cfg.pr_tgt}_{cfg.epochs}_{cfg.bs}.pkl",
             )
 
-            csv_file = init_experiment_folder(cfg)   
-            update_results(
-                csv_file,
-                epochs=cfg.epochs,
-                **{
-                    "Poisoned training ACC": test_ACC[-1],
-                    "Poisoned training ASR": test_ASR[-1],
-                }
-            )
+            if cfg.attack in {"narcissus_lc"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Poisoned training ASR Narcissus": test_ASR[-1],
+                        "Poisoned training ASR Label Consistent": test_ASR[-2],
+                        "Poisoned training ACC": test_ACC[-1],
+                    }
+                )
+            elif cfg.attack in {"narcissus_lc_sa"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Poisoned training ASR Narcissus": test_ASR[-1],
+                        "Poisoned training ASR Label Consistent": test_ASR[-2],
+                        "Poisoned training ASR Sleeper Agent": test_ASR[-3],
+                        "Poisoned training ACC": test_ACC[-1],
+                    }
+                )
+            else:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Poisoned training ACC": test_ACC[-1],
+                        "Poisoned training ASR": test_ASR[-1],
+                    }
+                )
         
     if cfg.batch_level:
         poisoned_train_loader, test_loader, poisoned_test_loader, target_class_indices = get_loaders_from_dataset(
@@ -514,9 +605,9 @@ def main() -> None:
                 and os.path.exists(scheduler_path)
                 and not cfg.force
             ):
-                model.load_state_dict(torch.load(model_path))
-                optimizer.load_state_dict(torch.load(optimizer_path))
-                scheduler.load_state_dict(torch.load(scheduler_path))
+                model.load_state_dict(torch.load(model_path, map_location=device))
+                optimizer.load_state_dict(torch.load(optimizer_path, map_location=device))
+                scheduler.load_state_dict(torch.load(scheduler_path, map_location=device))
                 print(f"Loaded model trained for {cfg.ep_bl_base} epochs from saved files")
             else:
                 print(f"Training model for {cfg.ep_bl_base} epochs before capturing batch‐level updates...")
@@ -553,8 +644,10 @@ def main() -> None:
         print(
             "Suspected samples length:", len(random_sus_idx),
             "Poison‐ratio trg:", cfg.pr_tgt,
-            "Suspected %:", cfg.pr_sus
+            "Suspected %:", cfg.pr_sus  
         )
+        
+        csv_file = init_experiment_folder(cfg)  
 
         # Capture batch‐level weight updates
         important_features = capture_first_level_multi_epoch_batch_sample_weight_updates(
@@ -575,21 +668,20 @@ def main() -> None:
             cfg.attack,
             device,
             cfg.global_seed,
-            cfg.results_path,
+            cfg.results_path  + cfg.exp,
             cfg.training_mode,
-            k=1
+            k=cfg.k_1
         )
 
         with open(
             cfg.prov_path
-            + f"important_features_single_{cfg.attack}_{cfg.dataset}_{cfg.eps}_{cfg.pr_tgt}_{cfg.pr_sus}_{cfg.bs_bl}_k_1.pkl",
+            + f"important_features_single_{cfg.attack}_{cfg.dataset}_{cfg.eps}_{cfg.pr_tgt}_{cfg.pr_sus}_{cfg.bs_bl}_k_{cfg.k_1}.pkl",
             "wb"
         ) as f:
             pickle.dump(important_features, f)
         print("Important features shape:", important_features.shape)
 
 
-        csv_file = init_experiment_folder(cfg)  
         update_results(
             csv_file,
             epochs=cfg.ep_bl,
@@ -654,9 +746,9 @@ def main() -> None:
                 and os.path.exists(scheduler_path)
                 and not cfg.force
             ):
-                model.load_state_dict(torch.load(model_path))
-                optimizer.load_state_dict(torch.load(optimizer_path))
-                scheduler.load_state_dict(torch.load(scheduler_path))
+                model.load_state_dict(torch.load(model_path, map_location=device))
+                optimizer.load_state_dict(torch.load(optimizer_path, map_location=device))
+                scheduler.load_state_dict(torch.load(scheduler_path, map_location=device))
                 print(f"Loaded model trained for {cfg.ep_sl_base} epochs")
             else:
                 print(f"Training for {cfg.ep_sl_base} epochs before capturing sample‐level updates...")
@@ -695,7 +787,7 @@ def main() -> None:
         feats_path = (
             f"{cfg.prov_path}"
             f"important_features_single_{cfg.attack}_{cfg.dataset}_{cfg.eps}_"
-            f"{cfg.pr_tgt}_{cfg.pr_sus}_{cfg.bs_sl}_k_1.pkl"
+            f"{cfg.pr_tgt}_{cfg.pr_sus}_{cfg.bs_sl}_k_{cfg.k_1}.pkl"
         )
         with open(feats_path, "rb") as f:
             important_features = pickle.load(f)
@@ -729,7 +821,7 @@ def main() -> None:
             cfg.global_seed,
             cfg.results_path,
             cfg.training_mode,
-            k=1
+            k=cfg.k_1,
         )
         print(
             "Shape of suspected updates:", sus_diff.shape,
@@ -787,6 +879,7 @@ def main() -> None:
         # For mixed attacks, restore the full poison_indices mapping
         if cfg.attack in {"narcissus_lc", "narcissus_lc_sa"}:
             poison_indices = poison_indices_all
+            
 
         print(
             "Shape of suspected updates:", sus_diff.shape,
@@ -794,7 +887,6 @@ def main() -> None:
             "Suspected indices:", np.array(sus_inds).shape,
             "Clean indices:", np.array(clean_inds).shape
         )
-
         random_sus_idx = np.unique(sus_inds)
         random_clean_sus_idx = list(set(random_sus_idx) - set(poison_indices))
 
@@ -806,7 +898,7 @@ def main() -> None:
         assert set(random_clean_sus_idx) == set(random_sus_idx) - set(poison_indices)
 
         # Score Suspected samples
-        indexes_to_exclude, tpr_kmeans, fpr_kmeans, tpr_gaussian, fpr_gaussian = score_poisoned_samples(
+        indexes_to_exclude, tpr_kmeans, fpr_kmeans, tpr_gaussian, fpr_gaussian = score_poisoned_samples( 
             sus_diff,
             clean_diff,
             clean_inds,
@@ -823,7 +915,9 @@ def main() -> None:
             cfg.pr_sus,
             cfg.attack,
             os.path.join(cfg.results_path, cfg.exp),
-            cfg.threshold
+            cfg.custom_threshold,
+            cfg.threshold_type, 
+            cfg.k_2 
         )
 
         print(
@@ -847,10 +941,10 @@ def main() -> None:
             csv_file,
             epochs=cfg.ep_sl,
             **{
-                "TPR KMeans": tpr_kmeans,
-                "FPR KMeans": fpr_kmeans,
-                "TPR Gaussian": tpr_gaussian,
-                "FPR Gaussian": fpr_gaussian
+                "TPR KMeans": np.round(tpr_kmeans * 100, 2),
+                "FPR KMeans": np.round(fpr_kmeans * 100, 2),
+                "TPR Gaussian": np.round(tpr_gaussian * 100, 2),
+                "FPR Gaussian": np.round(fpr_gaussian * 100, 2),
             }
         )
         
@@ -905,7 +999,42 @@ def main() -> None:
                     + f"retrained_model_{cfg.attack}_{cfg.dataset}_{cfg.eps}_{cfg.pr_tgt}_{cfg.pr_sus}_{cfg.epochs}.pkl"
                 )
             )
-            evaluate_model(model, test_loader, poisoned_test_loader, criterion, device)
+            test_ACC, test_ASR = evaluate_model(model, test_loader, poisoned_test_loader, criterion, device)
+            
+            if cfg.attack in {"narcissus_lc"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Retrain ASR Narcissus": test_ASR[-1],
+                        "Retrain ASR Label Consistent": test_ASR[-2],
+                        "Retrain ACC": test_ACC,
+                    }
+                )
+            elif cfg.attack in {"narcissus_lc_sa"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Retrain ASR Narcissus": test_ASR[-1],
+                        "Retrain ASR Label Consistent": test_ASR[-2],
+                        "Retrain ASR Sleeper Agent": test_ASR[-3],
+                        "Retrain ACC": test_ACC,
+                    }
+                )
+            else:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Retrain ACC": test_ACC,
+                        "Retrain ASR": test_ASR[-1],
+                    }
+                )
+            
         else:
             model, optr, slr, test_ASR, test_ACC = train(
                 model,
@@ -928,16 +1057,39 @@ def main() -> None:
             )
 
         
-            csv_file = init_experiment_folder(cfg)
-            update_results(
-                csv_file,
-                epochs=cfg.epochs,
-                **{
-                    "Retrain ACC": test_ACC[-1],
-                    "Retrain ASR": test_ASR[-1],
-                }
-            )
-
+            if cfg.attack in {"narcissus_lc"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Retrain ASR Narcissus": test_ASR[-1],
+                        "Retrain ASR Label Consistent": test_ASR[-2],
+                        "Retrain ACC": test_ACC,
+                    }
+                )
+            elif cfg.attack in {"narcissus_lc_sa"}:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Retrain ASR Narcissus": test_ASR[-1],
+                        "Retrain ASR Label Consistent": test_ASR[-2],
+                        "Retrain ASR Sleeper Agent": test_ASR[-3],
+                        "Retrain ACC": test_ACC,
+                    }
+                )
+            else:
+                csv_file = init_experiment_folder(cfg)   
+                update_results(
+                    csv_file,
+                    epochs=cfg.epochs,
+                    **{
+                        "Retrain ACC": test_ACC[-1],
+                        "Retrain ASR": test_ASR[-1],
+                    }
+                )
 
         
     
