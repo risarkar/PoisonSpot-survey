@@ -175,8 +175,8 @@ def train_prov_data_custom(
 
                     y_proba = clf.predict_proba(X_sus_temp)[:, 1]
                     
-                    # high_conf_indices = np.where(y_proba > confidence_threshold)[0]
-                    high_conf_indices = pos_inds_train
+                    high_conf_indices = np.where(y_proba > confidence_threshold)[0]
+                    # high_conf_indices = pos_inds_train
 
                     true_pos = set(pos_inds_train) & set(high_conf_indices)
 
