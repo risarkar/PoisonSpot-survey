@@ -129,7 +129,7 @@ def evaluate_model(model, test_loader, poisoned_test_loader, criterion, device):
     model.eval()
     model.to(device)
     
-    
+    test_ASR = []
     if type(poisoned_test_loader) == dict:
         for attack_name in poisoned_test_loader:
             print(f"Testing attack effect for {attack_name}")
@@ -146,6 +146,7 @@ def evaluate_model(model, test_loader, poisoned_test_loader, criterion, device):
             acc = correct / total
             print('\nAttack success rate %.2f' % (acc*100))
             print('Test_loss:',out_loss)
+            test_ASR.append(acc)
     else:
         correct, total = 0, 0
         for i, (images, labels) in enumerate(poisoned_test_loader):
@@ -159,6 +160,7 @@ def evaluate_model(model, test_loader, poisoned_test_loader, criterion, device):
         acc = correct / total
         print('\nAttack success rate %.2f' % (acc*100))
         print('Test_loss:',out_loss)
+        test_ASR.append(acc)
 
     correct_clean, total_clean = 0, 0
     for i, (images, labels) in enumerate(test_loader):
@@ -172,4 +174,6 @@ def evaluate_model(model, test_loader, poisoned_test_loader, criterion, device):
     acc_clean = correct_clean / total_clean
     print('\nTest clean Accuracy %.2f' % (acc_clean*100))
     print('Test_loss:',out_loss)
+        
+    return test_ASR, acc_clean
     

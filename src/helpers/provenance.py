@@ -85,7 +85,7 @@ def capture_first_level_multi_epoch_batch_sample_weight_updates(
     
     dataset = poisoned_train_loader.dataset
 
-    
+
     if not sample_from_test:
         target_images = [dataset[i][0] for i in range(len(dataset)) if dataset[i][1] == target_class]
         target_images = torch.stack(target_images).to(device)
@@ -263,8 +263,12 @@ def capture_first_level_multi_epoch_batch_sample_weight_updates(
                 step_4_2_time_avg += step_4_2_time
                 start_time = time.time()
                 
-                
-                output = sur_model(images[pos_indices])
+                try:
+                    output = sur_model(images[pos_indices])
+                except ValueError as e:
+                    sur_model.eval()
+                    output = sur_model(images[pos_indices])
+                    sur_model.train(mode = training_mode)
                     
                 pred_labels = output.argmax(dim=1)
                 
@@ -311,7 +315,12 @@ def capture_first_level_multi_epoch_batch_sample_weight_updates(
 
 
                 sur_model.train(mode = training_mode)  
-                output = sur_model(clean_batch)
+                try:
+                    output = sur_model(clean_batch)
+                except ValueError as e:
+                    sur_model.eval()
+                    output = sur_model(clean_batch)
+                    sur_model.train(mode = training_mode)
             
                     
                     
@@ -355,7 +364,12 @@ def capture_first_level_multi_epoch_batch_sample_weight_updates(
                 step5_1_time_avg += step5_1_time
                 
                 sur_model.train(mode = training_mode)    
-                output = sur_model(clean_batch)
+                try:
+                    output = sur_model(clean_batch)
+                except ValueError as e:
+                    sur_model.eval()
+                    output = sur_model(clean_batch)
+                    sur_model.train(mode = training_mode)
                 
                     
                 clean_labels = clean_labels.long()
@@ -797,12 +811,12 @@ def capture_sample_level_weight_updates_idv(
                     sur_model.train(mode=training_mode)
                     sur_optimizer.zero_grad()
 
-                    # try:
-                    output = sur_model(image)
-                    # except ValueError as e:
-                    #     # upsample the image to avoid batchnorm error
-                    #     image_rep = image.repeat(2, 1, 1, 1) 
-                    #     output = sur_model(image_rep)[0].unsqueeze(0)
+                    try:
+                        output = sur_model(image)
+                    except ValueError as e:
+                        sur_model.eval()
+                        output = sur_model(image)
+                        
                     
                     step_4_3_time = time.time() - start_time
                     step_4_3_time_avg += step_4_3_time

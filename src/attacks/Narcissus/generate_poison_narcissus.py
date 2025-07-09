@@ -40,6 +40,7 @@ def get_narcissus_cifar10_poisoned_data(
     model=ResNet(18),
     eps=16,
     global_seed=545,
+    multi_test = 3,
     gpu_id=0
 ):
     """
@@ -261,7 +262,7 @@ def get_narcissus_cifar10_poisoned_data(
 
     best_noise = narcissus_trigger
     test_non_target = list(np.where(np.array(test_label)!=target_class)[0])
-    test_non_target_change_image_label = poison_image_label(poi_ori_test,test_non_target,best_noise.cpu(),target_class,None)
+    test_non_target_change_image_label = poison_image_label(poi_ori_test,test_non_target,best_noise.cpu() * multi_test,target_class,None)
     print('Poison test dataset size is:',len(test_non_target_change_image_label))
 
 

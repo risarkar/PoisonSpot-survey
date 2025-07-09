@@ -12,7 +12,6 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from scipy import stats
 from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier as prf
 import random
 import torch.nn as nn
 import torch.optim as optim
@@ -108,13 +107,12 @@ def train_prov_data_custom(
 
     # Define models
     models = {
-        'prf': prf(n_estimators=100, bootstrap=True, n_jobs=-1),
         'RandomForest': RandomForestClassifier(random_state=seed, n_jobs=-1, n_estimators=100, class_weight='balanced'), 
         'LogisticRegression': LogisticRegression(max_iter=1000, random_state=seed),
         'LinearSVM': SVC(kernel='linear', probability=True, random_state=seed),
         'KernelSVM': SVC(kernel='rbf', probability=True, random_state=seed)
     }
-    
+
     
     param_grid = {
         'n_estimators': [100,  300, 500],
@@ -214,7 +212,7 @@ def train_prov_data_custom(
             y_pred = clf.predict(X_test)
             y_pred_proba = clf.predict_proba(X_test)[:, 1]
 
-            if model_name in ['RandomForest', 'LogisticRegression', 'LinearSVM', 'prf']:
+            if model_name in ['RandomForest', 'LogisticRegression', 'LinearSVM']:
                 feature_importances = clf.coef_[0] if model_name in ['LogisticRegression', 'LinearSVM'] else clf.feature_importances_
                 group_feature_importances.append(feature_importances)
             else:

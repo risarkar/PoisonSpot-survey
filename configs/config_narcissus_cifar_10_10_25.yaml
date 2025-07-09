@@ -1,7 +1,7 @@
 # configs/narcissus_cifar10.yaml
 
 # which attack to run
-attack: lc
+attack: narcissus
 
 # dataset / model choices
 dataset: CIFAR10
@@ -46,6 +46,7 @@ score_samples: true
 retrain: true
 get_result: false
 force: false
+
 
 # misc
 gpu_id: 0

@@ -31,7 +31,7 @@ bs_sl: 128
 target_class: 1
 source_class: 0
 pr_tgt: 10
-pr_sus: 50
+pr_sus: 10
 eps: 16
 vis: 255
 
@@ -44,6 +44,7 @@ score_samples: true
 retrain: true
 get_result: false
 force: false
+
 
 # misc
 gpu_id: 0
@@ -58,4 +59,4 @@ custom_threshold: 0.5
 threshold_type: kmeans 
 k_1: 1
 k_2: 0.0001  
-random: true 
+random: false 

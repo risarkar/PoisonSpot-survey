@@ -34,7 +34,7 @@ target_class: 2
 source_class: 0
 pr_tgt: 10
 pr_sus: 50
-eps: 16
+eps: 8
 vis: 255
 
 # which phases to run
@@ -48,7 +48,7 @@ get_result: false
 force: false
 
 # misc
-gpu_id: 0
+gpu_id: 1
 global_seed: 545
 lr: 0.1
 opt: sgd

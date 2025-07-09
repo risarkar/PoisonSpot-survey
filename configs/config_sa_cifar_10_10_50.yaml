@@ -51,7 +51,7 @@ global_seed: 545
 lr: 0.1
 opt: sgd
 training_mode: true
-sample_from_test: true
+sample_from_test: false
 cv_model: RandomForest
 groups: 5 
 custom_threshold: 0.5 

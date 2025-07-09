@@ -1,6 +1,4 @@
-epochs,Clean training ACC,Poisoned training ACC,Poisoned training ASR,Batch-level |features|,TPR KMeans,FPR KMeans,TPR Gaussian,FPR Gaussian,Retrain ACC,Retrain ASR
-5,0.735,,,,,,,,,
-5,,0.7352,0.98,,,,,,,
-1,,,,1997,,,,,,
-25,,,,,96.4,0.8,100.0,6.0,,
-5,,,,,,,,,0.7388,0.0
+epochs,Batch-level |features|,TPR KMeans,FPR KMeans,TPR Gaussian,FPR Gaussian,Retrain ACC,Retrain ASR
+1,1997,,,,,,
+25,,96.4,0.8,100.0,6.0,,
+5,,,,,,0.7388,0.0

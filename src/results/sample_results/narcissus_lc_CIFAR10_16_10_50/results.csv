@@ -1,0 +1,4 @@
+epochs,Batch-level |features|,TPR KMeans,FPR KMeans,TPR Gaussian,FPR Gaussian,Poisoned training ASR Narcissus,Poisoned training ASR Label Consistent,Poisoned training ACC
+1,6327,,,,,,,
+10,,100.0,0.0,100.0,0.0,,,
+200,,,,,,1.0,0.9883333333333333,0.9534

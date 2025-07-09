@@ -1,0 +1,4 @@
+epochs,Poisoned training ACC,Poisoned training ASR,Batch-level |features|,TPR KMeans,FPR KMeans,TPR Gaussian,FPR Gaussian
+200,0.9536,0.9996666666666667,,,,,
+1,,,5557,,,,
+10,,,,100.0,0.0,100.0,0.0

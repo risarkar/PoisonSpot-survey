@@ -113,38 +113,39 @@ def get_sa_cifar10_poisoned_data(
         y_poison_path = datasets_root_dir + f'y_poison_resnet_custom_sa_{target_class}_{source_class}_16_{poison_ratio}.npy'
     
     if not os.path.exists(indices_path) or not os.path.exists(x_poison_path) or not os.path.exists(y_poison_path):
-        print("Generating the attack")
-        loss_fn = nn.CrossEntropyLoss()
+        # print("Generating the attack")
+        # loss_fn = nn.CrossEntropyLoss()
         
-        model_art = PyTorchClassifier(model,input_shape=x_train.shape[1:], loss=loss_fn, optimizer=optimizer, nb_classes=10, clip_values=(min_, max_), preprocessing=(mean,std))
-        model.load_state_dict(torch.load(clean_model_path))
-        x_trigger,y_trigger,index_target = select_trigger_train(x_train,y_train,K,source_class,target_class)
-        attack = SleeperAgentAttack(model_art,
-                                        percent_poison= poison_ratio,
-                                        max_trials=4,
-                                        max_epochs=500,
-                                        learning_rate_schedule=(np.array([1e-1, 1e-2, 1e-3, 1e-4, 1e-5]), [250, 350, 400, 430, 460]),
-                                        epsilon=32/255,
-                                        batch_size=500,
-                                        verbose=1,
-                                        indices_target=index_target,
-                                        patching_strategy="fixed",
-                                        selection_strategy="max-norm",
-                                        patch=patch,
-                                        retraining_factor = 4,
-                                        model_retrain = True,
-                                        model_retraining_epoch = 80,
-                                        retrain_batch_size = 128,
-                                        source_class = source_class,
-                                        target_class = target_class,
-                                        device_name = str(device)       
-                                )
-        x_poison, y_poison = attack.poison(x_trigger,y_trigger,x_train,y_train,x_test,y_test) 
-        indices_poison = attack.get_poison_indices()
+        # model_art = PyTorchClassifier(model,input_shape=x_train.shape[1:], loss=loss_fn, optimizer=optimizer, nb_classes=10, clip_values=(min_, max_), preprocessing=(mean,std))
+        # model.load_state_dict(torch.load(clean_model_path))
+        # x_trigger,y_trigger,index_target = select_trigger_train(x_train,y_train,K,source_class,target_class)
+        # attack = SleeperAgentAttack(model_art,
+        #                                 percent_poison= poison_ratio,
+        #                                 max_trials=4,
+        #                                 max_epochs=500,
+        #                                 learning_rate_schedule=(np.array([1e-1, 1e-2, 1e-3, 1e-4, 1e-5]), [250, 350, 400, 430, 460]),
+        #                                 epsilon=32/255,
+        #                                 batch_size=500,
+        #                                 verbose=1,
+        #                                 indices_target=index_target,
+        #                                 patching_strategy="fixed",
+        #                                 selection_strategy="max-norm",
+        #                                 patch=patch,
+        #                                 retraining_factor = 4,
+        #                                 model_retrain = True,
+        #                                 model_retraining_epoch = 80,
+        #                                 retrain_batch_size = 128,
+        #                                 source_class = source_class,
+        #                                 target_class = target_class,
+        #                                 device_name = str(device)       
+        #                         )
+        # x_poison, y_poison = attack.poison(x_trigger,y_trigger,x_train,y_train,x_test,y_test) 
+        # indices_poison = attack.get_poison_indices()
         
-        np.save(x_poison_path,x_poison)
-        np.save(y_poison_path,y_poison)
-        np.save(indices_path,indices_poison)
+        # np.save(x_poison_path,x_poison)
+        # np.save(y_poison_path,y_poison)
+        # np.save(indices_path,indices_poison)
+        raise ValueError("Poisoned data not found. Please generate the poisoned SleeperAgent first.")
     
     x_poison = np.load(x_poison_path)
     y_poison = np.load(y_poison_path)
@@ -192,13 +193,17 @@ def get_sa_cifar10_poisoned_data(
                 if self.transform:
                     image = self.transform(image)
                 return image, label, index
-    
-
-    transform_train = Compose([
-        ToTensor(),
-        Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        # RandomHorizontalFlip(),
-    ])
+    if poison_ratio == 0.1:
+        transform_train = Compose([
+            ToTensor(),
+            Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            RandomHorizontalFlip(),
+        ])
+    else:
+        transform_train = Compose([
+            ToTensor(),
+            Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        ])
     
     transform_test = Compose([
         ToTensor(),

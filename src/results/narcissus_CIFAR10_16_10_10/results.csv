@@ -1,3 +1,4 @@
-epochs,Batch-level |features|,TPR KMeans,FPR KMeans,TPR Gaussian,FPR Gaussian
-1,6056,,,,
-10,,100.0,1.09,100.0,17.44
+epochs,Batch-level |features|,TPR KMeans,FPR KMeans,TPR Gaussian,FPR Gaussian,Retrain ACC,Retrain ASR
+1,8407,,,,,,
+10,,100.0,0.36,100.0,14.38,,
+200,,,,,,0.9524,0.436
