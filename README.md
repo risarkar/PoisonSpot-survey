@@ -1,7 +1,7 @@
 # **PoisonSpot: Precise Spotting of Clean-Label Backdoors via Fine-Grained Training Provenance Tracking**
 
 
-This repository contains the implementation of the paper **[PoisonSpot: Precise Spotting of Clean-Label Backdoors via Fine-Grained Training Provenance Tracking](https://arxiv-link)**. PoisonSpot is a novel system that precisely detects clean-label backdoor attacks by using fine-grained training provenance tracking, inspired by dynamic taint tracking. PoisonSpot captures and analyzes the impact of individual training samples on model parameter updates throughout the training process. By attributing poisoning scores to suspect samples based on their impact lineage, PoisonSpot allows for accurate identification and rejection of samples carrying backdoor triggers.
+This repository contains the implementation of the paper **[PoisonSpot: Precise Spotting of Clean-Label Backdoors via Fine-Grained Training Provenance Tracking](https://github.com/um-dsp/PoisonSpot/blob/main/PoisonSpot-CCS2025.pdf)**. PoisonSpot is a novel system that precisely detects clean-label backdoor attacks by using fine-grained training provenance tracking, inspired by dynamic taint tracking. PoisonSpot captures and analyzes the impact of individual training samples on model parameter updates throughout the training process. By attributing poisoning scores to suspect samples based on their impact lineage, PoisonSpot allows for accurate identification and rejection of samples carrying backdoor triggers.
 
 
 ---
