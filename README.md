@@ -300,8 +300,7 @@ The CSV contains the following columns:
   author    = {Philemon Hailemariam, Birhanu Eshete},
   title     = {PoisonSpot: Precise Spotting of Clean-Label Backdoors via Fine-Grained Training Provenance Tracking},
   booktitle = {Proceedings of the 2025 on ACM SIGSAC Conference on Computer and Communications Security},
-  year      = {2025},
-  note      = {Currently Accepted}
+  year      = {2025}
 }
 ```
 ---
