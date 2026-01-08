@@ -134,10 +134,10 @@ def main() -> None:
         cfg.exp += "_random"
         cfg.saved_models_path += "random/"
         cfg.prov_path += "random/"
-        if not os.path.exists(cfg.saved_models_path):
-            os.makedirs(cfg.saved_models_path)
-        if not os.path.exists(cfg.prov_path):
-            os.makedirs(cfg.prov_path)
+    if not os.path.exists(cfg.saved_models_path):
+        os.makedirs(cfg.saved_models_path)
+    if not os.path.exists(cfg.prov_path):
+        os.makedirs(cfg.prov_path)
 
         
     if cfg.pr_sus == int(cfg.pr_sus):
